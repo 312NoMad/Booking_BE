@@ -22,6 +22,9 @@ class User(AbstractUser, PermissionsMixin, AbstractModel):
         verbose_name_plural = _("users")
 
 
+
+
+
 class Customer(AbstractModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name=_("customer"))
     description = models.TextField(blank=True, null=True, verbose_name=_("description"))

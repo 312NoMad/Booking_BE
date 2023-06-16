@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.generics import CreateAPIView, UpdateAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.exceptions import NotFound
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -21,9 +21,16 @@ class SignInAPIView(TokenObtainPairView):
     serializer_class = SignInSerializer
 
 
-class ActivateAPIView(UpdateAPIView):
-    queryset = User.objects.all()
-    permission_classes = [IsAuthenticated]
+class ActivateAPIView(APIView):
+    def get(self, request, code):
+        try:
+            user = User.objects.get(activation_code=code)
+            user.is_active = True
+            user.activation_code = ''
+            user.save()
+            return Response('Вы успешно активировали аккаунт')
+        except User.DoesNotExist:
+            raise NotFound
 
 
 class LogOutAPIView(APIView):

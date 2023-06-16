@@ -1,32 +1,68 @@
-version: "3"
+version: '3.7'
 
 services:
-  web:
-    build: .
-    ports:
-      - 8000:8000
-    environment:
-      - DATABASE_URL=postgres://postgres:password@db:5432/postgres
-    depends_on:
-      - db
-    restart: always
-
   db:
-    image: postgres
-    ports:
-      - 5432:5432
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgres
-    restart: always
+    image: postgres:12.0-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - my-network
+    env_file:
+      - ./envs/.env
 
-  nginx:
+
+
+  backend:
+    restart: unless-stopped
     build:
       context: .
-      dockerfile: Dockerfile-nginx
+      dockerfile: ./docker/backend/Dockerfile
+    ports:
+      - 8000:8000
+    volumes:
+      - static_volume:/app/backend/staticfiles
+      - media_volume:/app/backend/media
+    entrypoint: /app/docker/backend/wsgi-entrypoint.sh
+    networks:
+      - my-network
+    depends_on:
+      - db
+    env_file:
+      - ./envs/.env
+
+
+  nginx:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: ./docker/nginx/Dockerfile
     ports:
       - 80:80
+      - 443:443
+    volumes:
+      - ./docker/nginx/dev:/etc/nginx/conf.d
+      - static_volume:/app/backend/staticfiles
+      - media_volume:/app/backend/media
+      - ./docker/nginx/certbot/conf:/etc/letsencrypt
+      - ./docker/nginx/certbot/www:/var/www/certbot
+    networks:
+      - my-network
     depends_on:
-      - web
-    restart: always
+      - backend
+      - db
+
+#  certbot:
+#    image: certbot/certbot
+#    restart: unless-stopped
+#    volumes:
+#      - ./docker/nginx/certbot/conf:/etc/letsencrypt
+#      - ./docker/nginx/certbot/www:/var/www/certbot
+#    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  media_volume:
+  static_volume:
+  postgres_data:
+
+networks:
+  my-network:

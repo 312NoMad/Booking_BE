@@ -21,8 +21,11 @@ class User(AbstractUser, PermissionsMixin, AbstractModel):
         verbose_name = _("user")
         verbose_name_plural = _("users")
 
-
-
+    def create_activation_code(self):
+        code = get_random_string(20)
+        self.activation_code = code
+        self.save()
+        return code
 
 
 class Customer(AbstractModel):

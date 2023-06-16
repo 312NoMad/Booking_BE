@@ -9,5 +9,5 @@ urlpatterns = [
     path("sign-in/", SignInAPIView.as_view()),
     path("sign-in/refresh/", TokenRefreshView.as_view()),
     path("logout/", LogOutAPIView.as_view()),
-    path("activate/", ActivateAPIView.as_view()),
+    path("activate/<str:code>", ActivateAPIView.as_view()),
 ]

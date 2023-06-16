@@ -31,7 +31,7 @@ class SignUpByPhoneSerializer(serializers.ModelSerializer):
             phone_number=validated_data["phone_number"],
         )
         user.set_password(validated_data["password"])
-        user.save()
+        user.create_activation_code()
 
         return user
 
